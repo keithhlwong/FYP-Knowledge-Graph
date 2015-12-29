@@ -1,8 +1,5 @@
 ﻿$(function () {
     // google custom search api
-    var cx = '017626171439071672611:amtplklj3cm';
-    //var gcse = document.createElement('script');
-    var apiKey = "AIzaSyBJDEDg48JHQpXKAt1dx95ROKsx94HmHrg";
 	
     /* Google */
     /* Get title, hyperlink, image(if any) from google search */
@@ -162,19 +159,46 @@
 	}
 	
 	/* Web crawling */
-	/* Currently adopted solution - using whateverorigin.org service */
-	/* Reference: https://github.com/ripper234/Whatever-Origin */
+	// google related url
 	$('#webCrawl').click(function(){
-		var query = $('#searchInput').val();
+		$('#resultContent').html("");
+		var query = $('#searchInput').val().replace(/ /g, "+");
 		$.ajax({
 			type: 'GET',
 			url: "source.php?google=" + query,
-			dataType: 'text',
+			dataType: 'json',
 			success: function(data){
-				alert(data);
-			}
+				//alert(data);
+				for (var i = 0 ; i < data.title.length ; i++){
+					$('#resultContent').append(data.title[i] + "<br />" + data.url[i]);
+					$('#resultContent').append("<br /><br />");
+				}
+				
+			},
+			error: function (jqXHR, textStatus, errorThrown) {
+                alert("Fail" + jqXHR + " " + textStatus + " " + errorThrown);
+            }
 		});
 	});
 	
+	// google image
+	$('#webCrawlImage').click(function(){
+		$('#resultContent').html("");
+		var query = $('#searchInput').val().replace(/ /g, "+");
+		$.ajax({
+			type: 'GET',
+			url: "source.php?googleImage=" + query,
+			dataType: 'json',
+			success: function(data){
+				for (var i = 0 ; i < data.image.length ; i++){
+					$('#resultContent').append("<img src=\"" + data.image[i] + "\" />");
+				}
+				
+			},
+			error: function (jqXHR, textStatus, errorThrown) {
+                alert("Fail" + jqXHR + " " + textStatus + " " + errorThrown);
+            }
+		});
+	});
 });
 

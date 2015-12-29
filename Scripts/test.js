@@ -1,7 +1,5 @@
 $(function () {
     // google api
-    var cx = '017626171439071672611:amtplklj3cm';
-    var apiKey = "AIzaSyBJDEDg48JHQpXKAt1dx95ROKsx94HmHrg";
 	
 	// global storage
 	var query = "";
@@ -24,7 +22,6 @@ $(function () {
 				(this.conceptName==query ? this.conceptName + " " + this.type 
 				: this.conceptName));
 			this.expanded = true;
-			//developeNode(concept);
 		}
 		this.contractCategory = function(){
 			return;
@@ -32,8 +29,8 @@ $(function () {
 	}
 	
 	/* Concept Class */
-	var Concept = function(name){
-		this.name = name;
+	var Concept = function(conceptName){
+		this.name = conceptName;
 		this.description = "";
 		this.relatedURL = []; /* title, url */
 		this.images = [];
@@ -53,6 +50,13 @@ $(function () {
 		googleImageRef(this.name, function(value){
 			this.images = value;
 		});
+		
+		
+		/* display concept data */
+		setTimeout(function(){
+			//alert(this.name + " conceptName: " + conceptName);
+			showConcept(this);
+		}, 3000);
 		
 		this.expandCategory = function(){
 			return;
@@ -165,50 +169,55 @@ $(function () {
 	
 	/* Google related URL */
 	function googleURLRef(concept, callback){
+		var q = concept;
+		q = q.replace(/ /g, "+");
 		var urlList = new Array();
-        $.ajax({
-            type: 'GET',
-            url: "https://www.googleapis.com/customsearch/v1?key=" + apiKey + "&cx=" + cx + "&q=" + concept,
-            timeout: 10000,
-            dataType: 'text',
-            success: function (data) {
-                var result = JSON.parse(data);
-				// store only 5 related URL
-				for (var i = 0; i < result.items.length && i < 5; i++) {
+		
+		$.ajax({
+			type: 'GET',
+			url: "source.php?google=" + q,
+			dataType: 'json',
+			timeout: 10000,
+			success: function(data){
+				for (var i = 0 ; i < data.title.length ; i++){
+					// skip undefined url
+					if (data.url[i] == undefined)
+						continue;
 					var titleAndUrl = {
-						title: result.items[i].htmlTitle.replace(/<([^>]+)>/g, ""),
-						url: result.items[i].link
+						title: data.title[i],
+						url: data.url[i]
 					};
 					urlList.push(titleAndUrl);
-                }
+				}
 				callback(urlList);
-            },
-            error: function (jqXHR, textStatus, errorThrown) {
-                alert("Fail" + jqXHR + " " + textStatus + " " + errorThrown);
+			},
+			error: function (jqXHR, textStatus, errorThrown) {
+                alert("Google Fail" + jqXHR + " " + textStatus + " " + errorThrown);
             }
-        });
+		});
 	}
 	
 	/* Google images URL */
 	function googleImageRef(concept, callback){
+		var q = concept;
+		q = q.replace(/ /g, "+");
 		var urlList = new Array();
-        $.ajax({
-            type: 'GET',
-            url: "https://www.googleapis.com/customsearch/v1?key=" + apiKey + "&cx=" + cx + "&searchType=image" +"&q=" + concept,
-            timeout: 10000,
-            dataType: 'text',
-            success: function (data) {
-                var result = JSON.parse(data);
-				// store only 5 images URL
-				for (var i = 0; i < result.items.length && i < 5; i++) {
-					urlList.push(result.items[i].link);
-                }
+		
+		$.ajax({
+			type: 'GET',
+			url: "source.php?googleImage=" + q,
+			dataType: 'json',
+			timeout: 10000,
+			success: function(data){
+				for (var i = 0 ; i < data.image.length ; i++){
+					urlList.push(data.image[i]);
+				}
 				callback(urlList);
-            },
-            error: function (jqXHR, textStatus, errorThrown) {
-                alert("Fail" + jqXHR + " " + textStatus + " " + errorThrown);
+			},
+			error: function (jqXHR, textStatus, errorThrown) {
+                alert("Google Image Fail" + jqXHR + " " + textStatus + " " + errorThrown);
             }
-        });
+		});
 	}
 	
 	// invoke initial search
@@ -237,5 +246,28 @@ $(function () {
 		var element = $(this).data();
 		element.expandCategory();
 	});
+	
+	// display concept data
+	function showConcept(concept){
+		//alert(concept.name);
+		//return;
+		if (concept != null){
+			var urlDisplay = "";
+			for (var i = 0 ; i < concept.relatedURL.length ; i++)
+				urlDisplay += "<b>" + concept.relatedURL[i].title + "</b><br />" + concept.relatedURL[i].url + "<br />";
+			
+			var imageDisplay = "";
+			for (var i = 0 ; i < concept.images.length ; i++)
+				imageDisplay += "<img src=\"" + concept.images[i] + "\" width=\"100px\" />";
+			
+			$('<div/>', {
+					html: "<b>Name</b> : <br />" + concept.name + "<br />" + 
+							"<b>Description</b> : <br />" + concept.description + "<br />" +
+							"<b>Related Links</b> : <br /><br />" + urlDisplay + "<br />" + 
+							"<b>Image</b> : <br />" + imageDisplay + "<br />",
+					class: "concept"
+			}).appendTo('#templateContainer');
+		}
+	}
 });
 
