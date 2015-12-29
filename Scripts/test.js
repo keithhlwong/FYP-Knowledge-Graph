@@ -19,8 +19,9 @@ $(function () {
 			
 			// specific concept
 			this.concept = new Concept(
-				(this.conceptName==query ? this.conceptName + " " + this.type 
+				(this.conceptName==query ? this.conceptName + " " + this.type
 				: this.conceptName));
+				
 			this.expanded = true;
 		}
 		this.contractCategory = function(){
@@ -30,24 +31,38 @@ $(function () {
 	
 	/* Concept Class */
 	var Concept = function(conceptName){
-		this.name = conceptName;
+		this.name = "";
 		this.description = "";
 		this.relatedURL = []; /* title, url */
 		this.images = [];
 		
+		// private set method
+		var setName = function(conceptName){
+			this.name = conceptName;
+		}
+		
+		this.expandCategory = function(){
+			return;
+		}
+		this.expandConcept = function(){
+			return;
+		}
+		
 		// Concept Constructor
+		// set concept name
+		setName(conceptName);
 		// get description from wikipedia 
-		wikipediaRef(this.name, function(value){
+		wikipediaRef(conceptName, function(value){
 			this.description = value;
 		});
 		
 		// get related URL from google
-		googleURLRef(this.name, function(value){
+		googleURLRef(conceptName, function(value){
 			this.relatedURL = value;
 		});
 
 		// get images URL from google
-		googleImageRef(this.name, function(value){
+		googleImageRef(conceptName, function(value){
 			this.images = value;
 		});
 		
@@ -56,14 +71,8 @@ $(function () {
 		setTimeout(function(){
 			//alert(this.name + " conceptName: " + conceptName);
 			showConcept(this);
-		}, 3000);
+		}, 4000);
 		
-		this.expandCategory = function(){
-			return;
-		}
-		this.expandConcept = function(){
-			return;
-		}
 	}
 	
 	/* Freebase */
@@ -161,7 +170,7 @@ $(function () {
 				var temp = data.query.pages;
 				temp = Object.keys(temp)[0];
 				// get corresponding extract
-				var extract = data.query.pages[temp].extract.toString();
+				var extract = data.query.pages[temp].extract;
 				callback(extract);
 			}
 		});
@@ -177,7 +186,6 @@ $(function () {
 			type: 'GET',
 			url: "source.php?google=" + q,
 			dataType: 'json',
-			timeout: 10000,
 			success: function(data){
 				for (var i = 0 ; i < data.title.length ; i++){
 					// skip undefined url
@@ -207,7 +215,6 @@ $(function () {
 			type: 'GET',
 			url: "source.php?googleImage=" + q,
 			dataType: 'json',
-			timeout: 10000,
 			success: function(data){
 				for (var i = 0 ; i < data.image.length ; i++){
 					urlList.push(data.image[i]);
@@ -249,16 +256,16 @@ $(function () {
 	
 	// display concept data
 	function showConcept(concept){
-		//alert(concept.name);
-		//return;
 		if (concept != null){
 			var urlDisplay = "";
-			for (var i = 0 ; i < concept.relatedURL.length ; i++)
-				urlDisplay += "<b>" + concept.relatedURL[i].title + "</b><br />" + concept.relatedURL[i].url + "<br />";
+			if (concept.relatedURL != undefined)
+				for (var i = 0 ; i < concept.relatedURL.length ; i++)
+					urlDisplay += "<b>" + concept.relatedURL[i].title + "</b><br />" + concept.relatedURL[i].url + "<br />";
 			
 			var imageDisplay = "";
-			for (var i = 0 ; i < concept.images.length ; i++)
-				imageDisplay += "<img src=\"" + concept.images[i] + "\" width=\"100px\" />";
+			if (concept.images != undefined)
+				for (var i = 0 ; i < concept.images.length ; i++)
+					imageDisplay += "<img src=\"" + concept.images[i] + "\" width=\"100px\" />";
 			
 			$('<div/>', {
 					html: "<b>Name</b> : <br />" + concept.name + "<br />" + 
@@ -266,7 +273,7 @@ $(function () {
 							"<b>Related Links</b> : <br /><br />" + urlDisplay + "<br />" + 
 							"<b>Image</b> : <br />" + imageDisplay + "<br />",
 					class: "concept"
-			}).appendTo('#templateContainer');
+			}).data(concept).appendTo('#templateContainer');
 		}
 	}
 });
